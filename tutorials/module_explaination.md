@@ -1,6 +1,10 @@
+## Baseline workflow
+![workflow](workflow_baseline.png)
+
+
 提供的一些方法：
 
-### Reasoning Module：
+## Reasoning Module：
 按顺序处理subtask，对每个stages提供solution
 1. ReasoningIO（直接输入输出）
 - 最简单的推理方式
@@ -26,7 +30,7 @@
 - 先理解任务相关的常识
 - 基于更宏观的理解来解决问题
 
-### Memory Module:
+## Memory Module:
 1. MemoryDILU
 - 最简单的记忆检索
 - 找到最相似的一条记忆并返回
@@ -45,7 +49,7 @@
 - 限制摘要在6句话以内
 - 返回最相似记忆的完整轨迹
 
-### Planning Module:
+## Planning Module:
 1. PlanningIO（基础输入输出）
 - 最基本的任务分解
 - 关注子任务的推理和工具调用指令
