@@ -23,7 +23,6 @@ class LLMBase:
         Args:
             messages: List of input messages, each message is a dict containing role and content
             model: Optional model override
-            temperature: Sampling temperature, defaults to 0.0
             max_tokens: Maximum tokens in response, defaults to 500
             stop_strs: Optional list of stop strings
             n: Number of responses to generate, defaults to 1
@@ -70,7 +69,6 @@ class InfinigenceLLM(LLMBase):
         Args:
             messages: List of input messages, each message is a dict containing role and content
             model: Optional model override
-            temperature: Sampling temperature, defaults to 0.0
             max_tokens: Maximum tokens in response, defaults to 500
             stop_strs: Optional list of stop strings
             n: Number of responses to generate, defaults to 1
@@ -82,10 +80,10 @@ class InfinigenceLLM(LLMBase):
             response = self.client.chat.completions.create(
                 model=model or self.model,
                 messages=messages,
-                temperature=temperature,
+                temperature=0,
                 max_tokens=max_tokens,
                 stop=stop_strs,
-                n=n
+                n=n,
             )
             
             if n == 1:
@@ -122,7 +120,6 @@ class OpenAILLM(LLMBase):
         Args:
             messages: List of input messages, each message is a dict containing role and content
             model: Optional model override
-            temperature: Sampling temperature, defaults to 0.0
             max_tokens: Maximum tokens in response, defaults to 500
             stop_strs: Optional list of stop strings
             n: Number of responses to generate, defaults to 1
@@ -133,7 +130,7 @@ class OpenAILLM(LLMBase):
         response = self.client.chat.completions.create(
             model=model or self.model,
             messages=messages,
-            temperature=temperature,
+            temperature=0,
             max_tokens=max_tokens,
             stop=stop_strs,
             n=n

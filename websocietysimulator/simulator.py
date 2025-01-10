@@ -9,7 +9,6 @@ from .llm import LLMBase
 from .agent.recommendation_agent import RecommendationAgent
 from .tasks.simulation_task import SimulationTask
 from .tasks.recommendation_task import RecommendationTask
-import numpy as np
 
 logger = logging.getLogger("websocietysimulator")
 
@@ -256,7 +255,6 @@ class Simulator:
 
         logger.info("Simulation finished")
         # 过滤掉None值（未完成的任务）
-        self.simulation_outputs = [output for output in self.simulation_outputs if output is not None]
         return self.simulation_outputs
 
     def evaluate(self) -> Dict[str, Any]:
@@ -308,11 +306,12 @@ class Simulator:
         # 从ground truth数据中提取真实POI
         gt_pois = [item['ground truth'] for item in ground_truth_data]
         
-        pred_pois = [
-            output['output']
-            for output in self.simulation_outputs
-            if 'output' in output
-        ]
+        pred_pois = []
+        for output in self.simulation_outputs:
+            if output is not None:
+                pred_pois.append(output['output'])
+            else:
+                pred_pois.append([''])
 
         # 计算评估指标
         metrics = self.recommendation_evaluator.calculate_hr_at_n(
@@ -329,7 +328,15 @@ class Simulator:
         """
         Evaluate simulation results
         """
-        simulated_data = [output['output'] for output in self.simulation_outputs]
+        simulated_data = []
+        for output in self.simulation_outputs:
+            if output is not None:
+                simulated_data.append(output['output'])
+            else:
+                simulated_data.append({
+                    'stars': 0,
+                    'review': ''
+                })
         metrics = self.simulation_evaluator.calculate_metrics(
             simulated_data=simulated_data,
             real_data=ground_truth_data
