@@ -162,7 +162,7 @@ if __name__ == "__main__":
 
     # Set the agent and LLM
     simulator.set_agent(MySimulationAgent)
-    simulator.set_llm(InfinigenceLLM(api_key="sk-9517498c9f814bd4950b6090c8e05410"))
+    simulator.set_llm(InfinigenceLLM(api_key="sk-damtshfyvhcd7xmg"))
 
     # Run the simulation
     # If you don't set the number of tasks, the simulator will run all tasks.
