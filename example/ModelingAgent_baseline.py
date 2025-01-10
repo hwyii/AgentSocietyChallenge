@@ -1,3 +1,6 @@
+import sys  
+import os  
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  
 from websocietysimulator import Simulator
 from websocietysimulator.agent import SimulationAgent
 import json 
@@ -142,13 +145,24 @@ class MySimulationAgent(SimulationAgent):
 
 if __name__ == "__main__":
     # Set the data
+    # 获取脚本所在目录的路径
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+
+    # 获取项目根目录路径  
+    root_dir = os.path.dirname(script_dir)  
+
+    # 数据目录路径
     task_set = "amazon" # "goodreads" or "yelp"
-    simulator = Simulator(data_dir="your data dir", device="gpu", cache=True)
-    simulator.set_task_and_groundtruth(task_dir=f"./track1/{task_set}/tasks", groundtruth_dir=f"./track1/{task_set}/groundtruth")
+    data_dir = os.path.join(root_dir, "data", "processed")  
+    simulator = Simulator(data_dir=data_dir, device="gpu", cache=True)  
+    
+    task_dir = os.path.join(script_dir, "track1", task_set, "tasks")  
+    groundtruth_dir = os.path.join(script_dir, "track1", task_set, "groundtruth")  
+    simulator.set_task_and_groundtruth(task_dir=task_dir, groundtruth_dir=groundtruth_dir)  
 
     # Set the agent and LLM
     simulator.set_agent(MySimulationAgent)
-    simulator.set_llm(InfinigenceLLM(api_key="your api key"))
+    simulator.set_llm(InfinigenceLLM(api_key="sk-9517498c9f814bd4950b6090c8e05410"))
 
     # Run the simulation
     # If you don't set the number of tasks, the simulator will run all tasks.
