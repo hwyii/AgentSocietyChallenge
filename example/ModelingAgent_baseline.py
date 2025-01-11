@@ -154,6 +154,7 @@ if __name__ == "__main__":
     # 数据目录路径
     task_set = "amazon" # "goodreads" or "yelp"
     data_dir = os.path.join(root_dir, "data", "processed")  
+    results_dir = os.path.join(root_dir, "results")
     simulator = Simulator(data_dir=data_dir, device="gpu", cache=True)  
     
     task_dir = os.path.join(script_dir, "track1", task_set, "tasks")  
@@ -168,9 +169,11 @@ if __name__ == "__main__":
     # If you don't set the number of tasks, the simulator will run all tasks.
     outputs = simulator.run_simulation(number_of_tasks=None, enable_threading=True, max_workers=10)
     
+    output_file = os.path.join(results_dir, f"evaluation_results_track1_{task_set}.json")
+
     # Evaluate the agent
     evaluation_results = simulator.evaluate()       
-    with open(f'./evaluation_results_track1_{task_set}.json', 'w') as f:
+    with open(output_file, 'w') as f:
         json.dump(evaluation_results, f, indent=4)
 
     # Get evaluation history
