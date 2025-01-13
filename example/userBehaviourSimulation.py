@@ -44,43 +44,6 @@ class MemoryBase:
     def addMemory(self, user_data):  
         raise NotImplementedError("This method should be implemented by subclasses.")
 
-
-        """  
-        Add a user's data to the memory store.  
-
-        Args:  
-            user_data (dict): Dictionary with user-related fields.  
-        """  
-        # Create the metadata dynamically, setting missing fields to None  
-        metadata = {  
-            "user_id": user_data.get('user_id'),  
-            "useful": user_data.get('useful', None),  
-            "funny": user_data.get('funny', None),  
-            "cool": user_data.get('cool', None),  
-            "elite": user_data.get('elite', None),  
-            "average_stars": user_data.get('average_stars', None),  
-            "compliment_hot": user_data.get('compliment_hot', None),  
-            "compliment_more": user_data.get('compliment_more', None),  
-            "compliment_profile": user_data.get('compliment_profile', None),  
-            "compliment_cute": user_data.get('compliment_cute', None),  
-            "compliment_list": user_data.get('compliment_list', None),  
-            "compliment_note": user_data.get('compliment_note', None),  
-            "compliment_plain": user_data.get('compliment_plain', None),  
-            "compliment_cool": user_data.get('compliment_cool', None),  
-            "compliment_funny": user_data.get('compliment_funny', None),  
-            "compliment_writer": user_data.get('compliment_writer', None),  
-            "source": user_data.get('source', 'unknown')  # Default source if missing  
-        }  
-
-        # Create memory document  
-        memory_doc = Document(  
-            page_content=f"User: {user_data.get('user_id', 'unknown')}",  
-            metadata=metadata  
-        )  
-
-        # Add memory document to the memory store  
-        self.scenario_memory.add_documents([memory_doc])
-
 class MemoryItem(MemoryBase):  
     def __init__(self, llm):  
         super().__init__(memory_type='item', llm=llm)  
@@ -105,46 +68,21 @@ class MemoryItem(MemoryBase):
         # Join trajectories with newlines and return
         return '\n'.join(task_trajectories)  
 
-    #def addMemory(self, item_data: dict): 
-    def addMemory(self, current_situation: str): 
-        """  
-        Add an item's data to the memory store. 存关于这个item的review
-
-        Args:  
-            item_data (dict): Dictionary with item-related fields.  
-        """  
-        """
-        # 如果要批量存储？待修改
-        memory_doc = Document(  
-            page_content=f"Review: {item_data['text']}",  # 关于这个item的review是核心
-            metadata={    
-                "user": item_data.get('user_id', 'Unknown user'),  
-                "text": item_data.get('text', 'No text available'),  # Store list of reviews  
-                "stars": item_data.get('stars', None),  
-                "useful": item_data.get('useful', None),  
-                "funny": item_data.get('funny', None),  
-                "cool": item_data.get('cool', None),  
-                "source": item_data.get('source', 'unknown'),  # Default source if not provided   
-            }  
-        )  
-        # Add to memory store  
+    def addMemory(self, current_situation: str):
+        # Extract task description
+        task_name = current_situation
+            
+        # Create document with metadata
+        memory_doc = Document(
+            page_content=task_name,
+            metadata={
+                "task_name": task_name,
+                "task_trajectory": current_situation
+            }
+        )
+            
+        # Add to memory store
         self.scenario_memory.add_documents([memory_doc])
-        """
-        def addMemory(self, current_situation: str):
-            # Extract task description
-            task_name = current_situation
-            
-            # Create document with metadata
-            memory_doc = Document(
-                page_content=task_name,
-                metadata={
-                    "task_name": task_name,
-                    "task_trajectory": current_situation
-                }
-            )
-            
-            # Add to memory store
-            self.scenario_memory.add_documents([memory_doc])
 
 
 class PlanningBaseline(PlanningBase):
@@ -438,7 +376,7 @@ if __name__ == "__main__":
 
     # Run the simulation
     # If you don't set the number of tasks, the simulator will run all tasks.
-    outputs = simulator.run_simulation(number_of_tasks=100, enable_threading=True, max_workers=10)
+    outputs = simulator.run_simulation(number_of_tasks=11, enable_threading=True, max_workers=10)
     
     # Evaluate the agent
     evaluation_results = simulator.evaluate()       
