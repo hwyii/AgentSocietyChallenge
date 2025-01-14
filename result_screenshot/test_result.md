@@ -14,4 +14,4 @@ We generate user style and add it into prompt for generating reviews and stars.
 3. version 2.0
 
 Based on version 1.0, we add reflection process to the class ReasoningBaseline.
-![version 2.0](yelp_100_user_.png)
+![version 2.0](yelp_100_user_reflection.png)
