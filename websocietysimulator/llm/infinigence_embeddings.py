@@ -1,5 +1,6 @@
 from typing import Any, List
 from langchain_core.embeddings import Embeddings
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 import requests
 
 class InfinigenceEmbeddings(Embeddings):
@@ -13,6 +14,11 @@ class InfinigenceEmbeddings(Embeddings):
         self.model = model
         self.infinity_api_url = infinity_api_url
         
+    @retry(
+        retry=retry_if_exception_type(Exception),
+        wait=wait_exponential(multiplier=1, min=10, max=60),  # 等待时间从10秒开始，指数增长，最长60秒
+        stop=stop_after_attempt(5)  # 最多重试5次
+    )
     def embed_documents(self, texts: List[str]) -> List[List[float]]:
         """Embed a list of documents into vectors"""
         headers = {
