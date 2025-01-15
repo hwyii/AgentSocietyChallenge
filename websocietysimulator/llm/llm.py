@@ -59,8 +59,8 @@ class InfinigenceLLM(LLMBase):
         
     @retry(
         retry=retry_if_exception_type(Exception),
-        wait=wait_exponential(multiplier=1, min=4, max=60),  # 等待时间从4秒开始，指数增长，最长60秒
-        stop=stop_after_attempt(5)  # 最多重试5次
+        wait=wait_exponential(multiplier=1, min=10, max=300),  # 等待时间从10秒开始，指数增长，最长300秒
+        stop=stop_after_attempt(10)  # 最多重试10次
     )
     def __call__(self, messages: List[Dict[str, str]], model: Optional[str] = None, temperature: float = 0.0, max_tokens: int = 500, stop_strs: Optional[List[str]] = None, n: int = 1) -> Union[str, List[str]]:
         """

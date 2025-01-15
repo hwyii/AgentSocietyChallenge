@@ -13,6 +13,12 @@ For yelp: we generate user style and add it into prompt for generating reviews a
 
 3. version 2.0 
 
+Based on version 1.0, we add reflection process to the class ReasoningBaseline.
+![version 2.0](yelp_100_user_reflection.png)
+
+
+4. version 3.0
+
 For Amazon: we analysis item information and add it into prompt.
 ![item info amazon](amazon_100_item.png)
 
@@ -21,3 +27,4 @@ For goodreads: we analysis item information and add it into prompt.
 
 For yelp: add both item information and user style into prompt.
 to do
+

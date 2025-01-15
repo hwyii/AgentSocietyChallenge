@@ -1,7 +1,6 @@
 import os
 import re
 import ast
-from langchain_openai import OpenAIEmbeddings
 from langchain_chroma import Chroma
 from langchain.docstore.document import Document
 from .tooluse_pool import tooluse_pool
@@ -15,6 +14,7 @@ class ToolUseBase():
             llm: LLM instance used to generate tool use instructions
         """
         self.llm = llm
+        self.embedding = self.llm.get_embedding_model()
     
     def format_prompt(self, tool_pool, task_description, tool_instruction, feedback_of_previous_tools):
         return f'''You have access to the following tools:
@@ -93,7 +93,6 @@ class ToolUseToolBench(ToolUseBase):
         
         for name, tools in tooluse_pool.items():
             db_path = os.path.join('./db', f'api_pool{name}/') 
-            self.embedding = OpenAIEmbeddings()       
             self.scenario_memory[name] = Chroma(
                 embedding_function=self.embedding,
                 persist_directory=db_path
@@ -129,7 +128,6 @@ class ToolUseToolBenchFormer(ToolUseBase):
         
         for name, tools in tooluse_pool.items():
             db_path = os.path.join('./db', f'api_pool{name}/') 
-            self.embedding = OpenAIEmbeddings()       
             self.scenario_memory[name] = Chroma(
                 embedding_function=self.embedding,
                 persist_directory=db_path

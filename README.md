@@ -133,7 +133,7 @@ class MySimulationAgent(SimulationAgent):
 ```
 
 - Check out the [Tutorial](./tutorials/agent_development.md) for Agent Development.
-- Baseline User Behavior Simulation Agent: [Baseline User Behavior Simulation Agent](./example/userBehaviorSimulation.py).
+- Baseline User Behavior Simulation Agent: [Baseline User Behavior Simulation Agent](./example/ModelingAgent_baseline.py).
 - Baseline Recommendation Agent: [Baseline Recommendation Agent](./example/RecAgent_baseline.py).
 ---
 
