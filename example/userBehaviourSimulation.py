@@ -197,45 +197,54 @@ class MySimulationAgent(SimulationAgent):
 
         return reasoning_result
 
-    def processItemYelp(self, item: dict): 
-        """
-        - Parking Options:  
-                * Valet: {'Available' if valet else 'Not Offered'}  
-                * Street Parking: {'Available' if street_parking else 'Not Available'}  
-                * Lot Parking: {'Available' if lot_parking else 'Not Available'}
-        """ 
+    def processItemYelp(self, item: dict):   
         name = item.get("name", "Unknown")  
         stars = item.get("stars", "Unknown")  
         is_open = item.get("is_open", "Unknown")  
 
         # 确保 attributes 始终是字典  
-        attributes = item.get("attributes", {})  
+        attributes = item.get("attributes", {}) or {}  
 
-        # 对于可能是布尔字符串值的字段，确保返回在NonNone时为"Unknown"  
-        restaurants_reservations = attributes.get("RestaurantsReservations", "Unknown")  
-        restaurants_good_for_groups = attributes.get("RestaurantsGoodForGroups", "Unknown")  
-        restaurants_attire = attributes.get("RestaurantsAttire", "'casual'").replace("'", "")  
-        business_accepts_credit_cards = attributes.get("BusinessAcceptsCreditCards", "Unknown")  
-        wi_fi = attributes.get("WiFi", "'free'").replace("'", "")  
-        has_tv = attributes.get("HasTV", "Unknown")  
-        restaurants_take_out = attributes.get("RestaurantsTakeOut", "Unknown")  
-        ambience = attributes.get("Ambience", "{}")  
-        good_for_kids = attributes.get("GoodForKids", "Unknown")  
-        noise_level = attributes.get("NoiseLevel", "Unknown").replace("u'", "").replace("'", "")  
-        alcohol = attributes.get("Alcohol", "'full_bar'").replace("'", "")  
-        happy_hour = attributes.get("HappyHour", "Unknown")  
-        restaurants_delivery = attributes.get("RestaurantsDelivery", "Unknown")  
-        wheelchair_accessible = attributes.get("WheelchairAccessible", "Unknown")  
-        outdoor_seating = attributes.get("OutdoorSeating", "Unknown")  
-        restaurants_table_service = attributes.get("RestaurantsTableService", "Unknown") 
+        # 定义安全的默认值获取函数  
+        def safe_get(dict_obj, key, default="Unknown"):  
+            return dict_obj.get(key, default) if dict_obj is not None else default  
 
-        # Extract business parking information  这里有格式问题，business_parking被attributes.get后是字符串里面套字典，未解决，先注释掉
-        #business_parking = json.loads(attributes.get("BusinessParking", "{}"))  
-        #valet = business_parking.get("valet", False)  
-        #street_parking = business_parking.get("street", False)  
-        #lot_parking = business_parking.get("lot", False)  
-        #garage = business_parking.get("garage", None)  
-        #validated_parking = business_parking.get("validated", None)  
+        # 使用安全获取方法  
+        restaurants_reservations = safe_get(attributes, "RestaurantsReservations")  
+        restaurants_good_for_groups = safe_get(attributes, "RestaurantsGoodForGroups")  
+        restaurants_attire = safe_get(attributes, "RestaurantsAttire", "'casual'").replace("'", "")  
+        business_accepts_credit_cards = safe_get(attributes, "BusinessAcceptsCreditCards")  
+        wi_fi = safe_get(attributes, "WiFi", "'free'").replace("'", "")  
+        has_tv = safe_get(attributes, "HasTV")  
+        restaurants_take_out = safe_get(attributes, "RestaurantsTakeOut")  
+        ambience = safe_get(attributes, "Ambience", "{}")  
+        good_for_kids = safe_get(attributes, "GoodForKids")  
+        noise_level = safe_get(attributes, "NoiseLevel", "Unknown").replace("u'", "").replace("'", "")  
+        #alcohol = safe_get(attributes, "Alcohol", "'full_bar'").replace("'", "")  
+        happy_hour = safe_get(attributes, "HappyHour")  
+        restaurants_delivery = safe_get(attributes, "RestaurantsDelivery")  
+        wheelchair_accessible = safe_get(attributes, "WheelchairAccessible")  
+        outdoor_seating = safe_get(attributes, "OutdoorSeating")  
+        restaurants_table_service = safe_get(attributes, "RestaurantsTableService")  
+
+        # 处理停车信息  
+        '''
+        try:  
+            business_parking_str = safe_get(attributes, "BusinessParking", "{}")  
+            business_parking = json.loads(business_parking_str) if business_parking_str else {}  
+            
+            valet = business_parking.get("valet", False)  
+            street_parking = business_parking.get("street", False)  
+            lot_parking = business_parking.get("lot", False)  
+            garage = business_parking.get("garage", None)  
+            validated_parking = business_parking.get("validated", None)  
+        except (json.JSONDecodeError, TypeError):  
+            valet = False  
+            street_parking = False  
+            lot_parking = False  
+            garage = None  
+            validated_parking = None  
+        '''
 
         # Extract hours of operation  
         hours = item.get("hours", {})  
@@ -268,8 +277,7 @@ class MySimulationAgent(SimulationAgent):
             - TV: {'Available' if has_tv == 'True' else 'Not Available'}  
             - Wheelchair Access: {'Yes' if wheelchair_accessible == 'True' else 'No'}    
 
-            5. Dining Experience Enhancers  
-            - Alcohol Service: {alcohol}  
+            5. Dining Experience Enhancers    
             - Happy Hour: {'Available' if happy_hour == 'True' else 'Not Offered'}  
             - Payment Methods: {'Credit Cards Accepted' if business_accepts_credit_cards == 'True' else 'Limited Payment Options'}  
 
@@ -439,14 +447,14 @@ class MySimulationAgent(SimulationAgent):
             
             # 不同task用不同的处理方式和prompt
             if user['source'] == 'yelp':
-                #item_info = self.processItemYelp(item) # get方法还是报错未解决，先注释掉
+                item_info = self.processItemYelp(item) 
                 user_style = self.processUserYelp(user)
                 # You need to write a review for this business, here is the information: {item_info}
                 task_description = f'''
                 You are a real human user on Yelp, a platform for crowd-sourced business reviews. 
                 Here is your Yelp profile and review history style: {user_style}
 
-                
+                You need to write a review for this business, here is the information: {item_info}
 
                 Others have reviewed this business before: {review_similar}
 
