@@ -8,5 +8,16 @@ Baseline result.
 
 2. version 1.0
 
-We generate user style and add it into prompt for generating reviews and stars.
+For yelp: we generate user style and add it into prompt for generating reviews and stars.
 ![user style](yelp_100_user.png)
+
+3. version 2.0 
+
+For Amazon: we analysis item information and add it into prompt.
+![item info amazon](amazon_100_item.png)
+
+For goodreads: we analysis item information and add it into prompt.
+![item info goodreads](goodreads_100_item.png)
+
+For yelp: add both item information and user style into prompt.
+to do
