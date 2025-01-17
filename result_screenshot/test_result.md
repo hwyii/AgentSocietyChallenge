@@ -17,7 +17,7 @@ Based on version 1.0, we add reflection process to the class ReasoningBaseline.
 ![version 2.0](yelp_100_user_reflection.png)
 
 
-4. version 3.0
+4. version 3.0 (without reflection yet)
 
 For Amazon: we analysis item information and add it into prompt.
 ![item info amazon](amazon_100_item.png)
