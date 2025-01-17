@@ -25,6 +25,18 @@ For Amazon: we analysis item information and add it into prompt.
 For goodreads: we analysis item information and add it into prompt.
 ![item info goodreads](goodreads_100_item.png)
 
-For yelp: add both item information and user style into prompt.
-to do
+For yelp: we analysis item information and add it into prompt.
+![item info yelp](yelp_100_item.png)
 
+4. version 4.0
+
+For Amazon: Based on version 3.0, we add reflection to the reasoningbasline
+![item info reflection amazon](amazon_100_item_reflection.png)
+
+For goodreads: Based on version 3.0, we add reflection to the reasoningbasline
+![item info reflection goodreads](goodreads_100_item_reflection.png)
+
+For yelp: Based on version 3.0, we add reflection to the reasoningbasline, trying to debug
+![item info reflection yelp](yelp_100_item_reflection.png)
+
+Compared with version 3.0, no obvious improvement.

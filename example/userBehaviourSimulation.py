@@ -108,7 +108,6 @@ class PlanningBaseline(PlanningBase):
         ]
         return self.plan
 
-
 class ReasoningBaseline(ReasoningBase):
     """Inherit from ReasoningBase"""
     
@@ -116,8 +115,9 @@ class ReasoningBaseline(ReasoningBase):
         """Initialize the reasoning module"""
         super().__init__(profile_type_prompt=profile_type_prompt, memory=None, llm=llm)
         
-    def __call__(self, task_description: str):
+    def __call__(self, task_description: str, user_style=''):
         """Override the parent class's __call__ method"""
+        # print("user_style:", user_style)
         prompt = '''
 {task_description}'''
         prompt = prompt.format(task_description=task_description)
@@ -128,8 +128,28 @@ class ReasoningBaseline(ReasoningBase):
             temperature=0.0,
             max_tokens=1000
         )
-        
+
+        print("Before reflection:", reasoning_result)
+        reflection_prompt = f'''
+        The following reasoning result was generated:
+        "{reasoning_result}"
+        As the user prefers responses in the following style: "{user_style}",
+        please reflect on the result to ensure your generation aligns with the user's preferred style.
+
+        Format your response exactly as follows:
+                stars: [your rating]
+                review: [your review]
+        '''
+        print("user_style:", user_style)
+        reflection_messages = [{"role": "user", "content": reflection_prompt}]
+        reasoning_result = self.llm(
+            messages=reflection_messages,
+            temperature=0.0,
+            max_tokens=1000
+        )
+        print("After reflection:", reasoning_result)
         return reasoning_result
+
 
 
 class MySimulationAgent(SimulationAgent):
@@ -284,7 +304,7 @@ class MySimulationAgent(SimulationAgent):
             - Captures the unique character of this business  
             """  
         # ipdb.set_trace()
-        # print("prompt here:", prompt)
+        print("prompt here:", prompt)
 
         # Step 3: Call LLM once to generate the full report  
         reasoning_result = self.llm(  
@@ -439,7 +459,7 @@ class MySimulationAgent(SimulationAgent):
             # 从item memory里提取similar reviews
             reviews_user = self.interaction_tool.get_reviews(user_id=self.task['user_id']) # 通过user_id来获取这个人之前做的一些review
             review_similar = self.memory_item.retriveMemory(f'{reviews_user[0]["text"]}') # 基于这个人的review从memory里取出相关的对item的review
-            
+
             # 不同task用不同的处理方式和prompt
             if user['source'] == 'yelp':
                 item_info = self.processItemYelp(item) 
@@ -578,7 +598,7 @@ if __name__ == "__main__":
     root_dir = os.path.dirname(script_dir)  
 
     # 数据目录路径
-    task_set = "yelp" # "goodreads" or "yelp"
+    task_set = "goodreads" # "goodreads" or "yelp"
     data_dir = os.path.join(root_dir, "data", "processed")  
     results_dir = os.path.join(root_dir, "results")
     simulator = Simulator(data_dir=data_dir, device="gpu", cache=True)  
@@ -595,7 +615,7 @@ if __name__ == "__main__":
     # If you don't set the number of tasks, the simulator will run all tasks.
     outputs = simulator.run_simulation(number_of_tasks=100, enable_threading=True, max_workers=10)
     
-    output_file = os.path.join(results_dir, f"evaluation_results_track1_{task_set}_item_user.json")
+    output_file = os.path.join(results_dir, f"evaluation_results_track1_{task_set}_item_user_reflection.json")
 
     # Evaluate the agent
     evaluation_results = simulator.evaluate()       
