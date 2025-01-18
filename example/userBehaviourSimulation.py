@@ -193,7 +193,7 @@ class MySimulationAgent(SimulationAgent):
         # 调用大语言模型生成分析报告  
         reasoning_result = self.llm(  
             messages=[{"role": "user", "content": prompt}],  
-            temperature=0.5,  
+            temperature=0.0,  
             max_tokens=2000  
         )  
 
@@ -397,13 +397,39 @@ class MySimulationAgent(SimulationAgent):
         '''
         Get the user style based on the user's historical reviews on Goodreads.
         '''
-        prompt = f"Analysis the following user's review style and tendencies of the stars based on the provided information:\n\n."  
-        for review in reviews_user:
-            prompt += f"Review for a book: Stars: ({review['stars']} stars):\n\n"
-            prompt += f"{review['text']}\n\n"
-       
-        prompt += f"Summarize and explain the user's review style in a professional and engaging manner. Pay attention to the user's rating tendencies based on the star ratings."
- 
+        # 提取星级评分  
+        star_ratings = [review['stars'] for review in reviews_user]  
+        
+        # 计算平均值和方差  
+        mean_rating = np.mean(star_ratings)  
+        variance_rating = np.var(star_ratings)  
+        
+        # 构建初始 prompt，加入平均值和方差信息  
+        prompt = (  
+            f"Analyze the review style of a Amazon user based on their historical reviews. "  
+            f"The user's average star rating is {mean_rating:.2f}, and the variance in their ratings is {variance_rating:.2f}. "  
+            "Focus on the following aspects:\n\n"  
+            "1. **Star ratings**: Discuss whether the user tends to give higher or lower ratings based on this average. "  
+            "Does their variance suggest consistent ratings, or do they tend toward extreme ratings (e.g., only 1 or 5 stars)?\n"  
+            "2. **Review sentiment and emotion**: Identify common sentiments (positive, neutral, negative) "  
+            "and emotional tones (e.g., enthusiastic, critical, disappointed) in the user's reviews. "  
+            "Summarize their review style based on the language used.\n"  
+            "3. **Correlation between star ratings and review content**: Analyze what types of items or aspects tend to receive higher ratings, "  
+            "and what aspects tend to receive lower ratings. Highlight specific themes or patterns in their reviews that align with their scores.\n\n"  
+        )  
+
+        # 遍历用户的每条评论，将内容添加到 prompt  
+        for review in reviews_user:  
+            prompt += f"Review:\n"  
+            prompt += f"Stars: {review['stars']} out of 5\n"  
+            prompt += f"Review Text: {review['text']}\n\n"  
+        
+        # 总结部分  
+        prompt += (  
+            "Based on the provided data, summarize the user's review style, addressing the above dimensions. "  
+            "Pay special attention to the relationship between their ratings, the content of their reviews, "  
+            "and the emotional tone they exhibit."  
+        )  
         reasoning_result = self.llm(  
             messages=[{"role": "user", "content": prompt}],  
             temperature=0.0,  
@@ -412,7 +438,7 @@ class MySimulationAgent(SimulationAgent):
          
         return reasoning_result
     
-
+    
     # Process user style (only for yelp)
     def processUserYelp(self, user: dict):
         """  
@@ -482,7 +508,53 @@ class MySimulationAgent(SimulationAgent):
 
         # Step 4: Return the generated report  
         return reasoning_result   
+    
+    '''
+    def processUserYelp(self, reviews_user: list):
         
+        #user来自user.json
+        #reviews_user来自review.json, 是某个user之前的所有reviews
+        
+        star_ratings = [review['stars'] for review in reviews_user]  
+        
+        # 计算平均值和方差  
+        mean_rating = np.mean(star_ratings)  
+        variance_rating = np.var(star_ratings)  
+
+        # 构建初始 prompt，加入平均值和方差信息  
+        prompt = (  
+            f"Analyze the review style of a Yelp user based on their historical reviews. "  
+            f"The user's average star rating is {mean_rating:.2f}, and the variance in their ratings is {variance_rating:.2f}. "  
+            "Focus on the following aspects:\n\n"  
+            "1. **Star ratings**: Discuss whether the user tends to give higher or lower ratings based on this average. "  
+            "Does their variance suggest consistent ratings, or do they tend toward extreme ratings (e.g., only 1 or 5 stars)?\n"  
+            "2. **Review sentiment and emotion**: Identify common sentiments (positive, neutral, negative) "  
+            "and emotional tones (e.g., enthusiastic, critical, disappointed) in the user's reviews. "  
+            "Summarize their review style based on the language used.\n"  
+            "3. **Correlation between star ratings and review content**: Analyze what types of business or aspects tend to receive higher ratings, "  
+            "and what aspects tend to receive lower ratings. Highlight specific themes or patterns in their reviews that align with their scores.\n\n"  
+        )  
+
+        # 遍历用户的每条评论，将内容添加到 prompt  
+        for review in reviews_user:  
+            prompt += f"Review:\n"  
+            prompt += f"Stars: {review['stars']} out of 5\n"  
+            prompt += f"Review Text: {review['text']}\n\n"  
+        
+        # 总结部分  
+        prompt += (  
+            "Based on the provided data, summarize the user's review style, addressing the above dimensions. "  
+            "Pay special attention to the relationship between their ratings, the content of their reviews, "  
+            "and the emotional tone they exhibit."  
+        )  
+        reasoning_result = self.llm(  
+            messages=[{"role": "user", "content": prompt}],  
+            temperature=0.0,  
+            max_tokens=2000  
+        )  
+         
+        return reasoning_result
+    '''
     def workflow(self):
         try:
             plan = self.planning(task_description=self.task) # 先规划任务，格式化返回
@@ -504,17 +576,17 @@ class MySimulationAgent(SimulationAgent):
             
             # 从item memory里提取similar reviews
             reviews_user = self.interaction_tool.get_reviews(user_id=self.task['user_id']) # 通过user_id来获取这个人之前做的一些review
-            print(type(reviews_user))
+            
             review_similar = self.memory_item.retriveMemory(f'{reviews_user[0]["text"]}') # 基于这个人的review从memory里取出相关的对item的review
 
             # 不同task用不同的处理方式和prompt
             if user['source'] == 'yelp':
                 item_info = self.processItemYelp(item) 
+                #user_style = self.processUserYelp(reviews_user)
                 user_style = self.processUserYelp(user)
                 # You need to write a review for this business, here is the information: {item_info}
                 task_description = f'''
-                You are a real human user on Yelp, a platform for crowd-sourced business reviews. 
-                Here is your Yelp profile and review history style: {user_style}
+                You are a real human user on Yelp, a platform for crowd-sourced business reviews. Here is your Yelp profile and review history style: {user_style}
 
                 You need to write a review for this business, here is the information: {item_info}
 
@@ -648,7 +720,7 @@ if __name__ == "__main__":
     root_dir = os.path.dirname(script_dir)  
 
     # 数据目录路径
-    task_set = "goodreads" # "goodreads" or "yelp"
+    task_set = "yelp" # "goodreads" or "yelp"
     data_dir = os.path.join(root_dir, "data", "processed")  
     results_dir = os.path.join(root_dir, "results")
     simulator = Simulator(data_dir=data_dir, device="gpu", cache=True)  
@@ -665,7 +737,7 @@ if __name__ == "__main__":
     # If you don't set the number of tasks, the simulator will run all tasks.
     outputs = simulator.run_simulation(number_of_tasks=100, enable_threading=True, max_workers=10)
     
-    output_file = os.path.join(results_dir, f"evaluation_results_track1_{task_set}_item_user_3.json")
+    output_file = os.path.join(results_dir, f"evaluation_results_track1_{task_set}_item_user2.json")
 
     # Evaluate the agent
     evaluation_results = simulator.evaluate()       
