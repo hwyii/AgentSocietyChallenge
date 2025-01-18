@@ -13,6 +13,7 @@ from langchain.docstore.document import Document
 import shutil
 import uuid
 import logging
+import numpy as np
 # import ipdb
 logging.basicConfig(level=logging.INFO)
 
@@ -129,25 +130,25 @@ class ReasoningBaseline(ReasoningBase):
             max_tokens=1000
         )
 
-        print("Before reflection:", reasoning_result)
-        reflection_prompt = f'''
-        The following reasoning result was generated:
-        "{reasoning_result}"
-        As the user prefers responses in the following style: "{user_style}",
-        please reflect on the result to ensure your generation aligns with the user's preferred style.
+        # print("Before reflection:", reasoning_result)
+        # reflection_prompt = f'''
+        # The following reasoning result was generated:
+        # "{reasoning_result}"
+        # As the user prefers responses in the following style: "{user_style}",
+        # please reflect on the result to ensure your generation aligns with the user's preferred style.
 
-        Format your response exactly as follows:
-                stars: [your rating]
-                review: [your review]
-        '''
-        print("user_style:", user_style)
-        reflection_messages = [{"role": "user", "content": reflection_prompt}]
-        reasoning_result = self.llm(
-            messages=reflection_messages,
-            temperature=0.0,
-            max_tokens=1000
-        )
-        print("After reflection:", reasoning_result)
+        # Format your response exactly as follows:
+        #         stars: [your rating]
+        #         review: [your review]
+        # '''
+        # print("user_style:", user_style)
+        # reflection_messages = [{"role": "user", "content": reflection_prompt}]
+        # reasoning_result = self.llm(
+        #     messages=reflection_messages,
+        #     temperature=0.0,
+        #     max_tokens=1000
+        # )
+        # print("After reflection:", reasoning_result)
         return reasoning_result
 
 
@@ -212,13 +213,12 @@ class MySimulationAgent(SimulationAgent):
         # 调用大语言模型生成分析报告  
         reasoning_result = self.llm(  
             messages=[{"role": "user", "content": prompt}],  
-            temperature=0.5,  
+            temperature=0.0,  
             max_tokens=2000  
         )  
 
         return reasoning_result
 
-# debug yelp
 
     def processItemYelp(self, item: dict):   
         name = item.get("name", "Unknown")  
@@ -304,12 +304,12 @@ class MySimulationAgent(SimulationAgent):
             - Captures the unique character of this business  
             """  
         # ipdb.set_trace()
-        print("prompt here:", prompt)
+        #print("prompt here:", prompt)
 
         # Step 3: Call LLM once to generate the full report  
         reasoning_result = self.llm(  
             messages=[{"role": "user", "content": prompt}],  
-            temperature=0.5,  
+            temperature=0.0,  
             max_tokens=2000  
         )  
 
@@ -361,11 +361,77 @@ class MySimulationAgent(SimulationAgent):
         # 调用大语言模型生成分析报告  
         reasoning_result = self.llm(  
             messages=[{"role": "user", "content": prompt}],  
-            temperature=0.5,  
+            temperature=0.0,  
             max_tokens=2000  
         )  
 
         return reasoning_result
+
+    def processUsergoodreads(self, reviews_user: list):
+        '''
+        Get the user style based on the user's historical reviews on Goodreads.
+        '''
+        # 提取星级评分  
+        star_ratings = [review['stars'] for review in reviews_user]  
+        
+        # 计算平均值和方差  
+        mean_rating = np.mean(star_ratings)  
+        variance_rating = np.var(star_ratings)  
+        
+        # 构建初始 prompt，加入平均值和方差信息  
+        prompt = (  
+            f"Analyze the review style and tendencies of a Goodreads user based on their historical reviews. "  
+            f"The user's average star rating is {mean_rating:.2f}, and the variance in their ratings is {variance_rating:.2f}. "  
+            "Focus on the following aspects:\n\n"  
+            "1. **Star ratings**: Discuss whether the user tends to give higher or lower ratings based on this average. "  
+            "Does their variance suggest consistent ratings, or do they tend toward extreme ratings (e.g., only 1 or 5 stars)?\n"  
+            "2. **Review sentiment and emotion**: Identify common sentiments (positive, neutral, negative) "  
+            "and emotional tones (e.g., enthusiastic, critical, disappointed) in the user's reviews. "  
+            "Summarize their review style based on the language used.\n"  
+            "3. **Correlation between star ratings and review content**: Analyze what types of books or aspects tend to receive higher ratings, "  
+            "and what aspects tend to receive lower ratings. Highlight specific themes or patterns in their reviews that align with their scores.\n\n"  
+        )  
+
+        # 遍历用户的每条评论，将内容添加到 prompt  
+        for review in reviews_user:  
+            prompt += f"Book Review:\n"  
+            prompt += f"Stars: {review['stars']} out of 5\n"  
+            prompt += f"Review Text: {review['text']}\n\n"  
+        
+        # 总结部分  
+        prompt += (  
+            "Based on the provided data, summarize the user's review style, addressing the above dimensions. "  
+            "Pay special attention to the relationship between their ratings, the content of their reviews, "  
+            "and the emotional tone they exhibit."  
+        )     
+        reasoning_result = self.llm(  
+            messages=[{"role": "user", "content": prompt}],  
+            temperature=0.0,  
+            max_tokens=2000  
+        )  
+        
+        # Step 4: Return the generated report  
+        return reasoning_result  
+   
+    def processUseramazon(self, reviews_user: list):
+        '''
+        Get the user style based on the user's historical reviews on Goodreads.
+        '''
+        prompt = f"Analysis the following user's review style and tendencies of the stars based on the provided information:\n\n."  
+        for review in reviews_user:
+            prompt += f"Review for a book: Stars: ({review['stars']} stars):\n\n"
+            prompt += f"{review['text']}\n\n"
+       
+        prompt += f"Summarize and explain the user's review style in a professional and engaging manner. Pay attention to the user's rating tendencies based on the star ratings."
+ 
+        reasoning_result = self.llm(  
+            messages=[{"role": "user", "content": prompt}],  
+            temperature=0.0,  
+            max_tokens=2000  
+        )  
+         
+        return reasoning_result
+    
 
     # Process user style (only for yelp)
     def processUserYelp(self, user: dict):
@@ -430,13 +496,61 @@ class MySimulationAgent(SimulationAgent):
         # Step 3: Call LLM once to generate the full report  
         reasoning_result = self.llm(  
             messages=[{"role": "user", "content": prompt}],  
-            temperature=0.5,  
+            temperature=0.0,  
             max_tokens=2000  
         )  
 
         # Step 4: Return the generated report  
         return reasoning_result   
+    
+
+    def processUserYelp_reviews_user(self, reviews_user: list):
+        '''
+        Get the user style based on the user's historical reviews on Yelp.
+        '''
+        # 提取星级评分  
+        star_ratings = [review['stars'] for review in reviews_user]  
         
+        # 计算平均值和方差  
+        mean_rating = np.mean(star_ratings)  
+        variance_rating = np.var(star_ratings)  
+        
+        # 构建初始 prompt，加入平均值和方差信息  
+        prompt = (  
+            f"Analyze the review style and tendencies of a Yelp user based on their historical reviews. "  
+            f"The user's average star rating is {mean_rating:.2f}, and the variance in their ratings is {variance_rating:.2f}. "  
+            "Focus on the following aspects:\n\n"  
+            "1. **Star ratings**: Discuss whether the user tends to give higher or lower ratings based on this average. "  
+            "Does their variance suggest consistent ratings, or do they tend toward extreme ratings (e.g., only 1 or 5 stars)?\n"  
+            "2. **Review sentiment and emotion**: Identify common sentiments (positive, neutral, negative) "  
+            "and emotional tones (e.g., enthusiastic, critical, disappointed) in the user's reviews. "  
+            "Summarize their review style based on the language used.\n"  
+            "3. **Correlation between star ratings and review content**: Analyze what types of aspects tend to receive higher ratings, "  
+            "and what aspects tend to receive lower ratings. Highlight specific themes or patterns in their reviews that align with their scores.\n\n"  
+        )  
+
+        # 遍历用户的每条评论，将内容添加到 prompt  
+        for review in reviews_user:  
+            prompt += f"Review:\n"  
+            prompt += f"Stars: {review['stars']} out of 5\n"  
+            prompt += f"Review Text: {review['text']}\n\n"  
+        
+        # 总结部分  
+        prompt += (  
+            "Based on the provided data, summarize the user's review style, addressing the above dimensions. "  
+            "Pay special attention to the relationship between their ratings, the content of their reviews, "  
+            "and the emotional tone they exhibit."  
+        )     
+        reasoning_result = self.llm(  
+            messages=[{"role": "user", "content": prompt}],  
+            temperature=0.0,  
+            max_tokens=2000  
+        )  
+        
+        # Step 4: Return the generated report  
+        return reasoning_result  
+        
+
     def workflow(self):
         try:
             plan = self.planning(task_description=self.task) # 先规划任务，格式化返回
@@ -458,8 +572,9 @@ class MySimulationAgent(SimulationAgent):
             
             # 从item memory里提取similar reviews
             reviews_user = self.interaction_tool.get_reviews(user_id=self.task['user_id']) # 通过user_id来获取这个人之前做的一些review
+            # print(type(reviews_user))
             review_similar = self.memory_item.retriveMemory(f'{reviews_user[0]["text"]}') # 基于这个人的review从memory里取出相关的对item的review
-            
+
             # 不同task用不同的处理方式和prompt
             if user['source'] == 'yelp':
                 item_info = self.processItemYelp(item) 
@@ -498,16 +613,16 @@ class MySimulationAgent(SimulationAgent):
                 '''
             elif user['source'] == 'amazon':
                 item_info = self.processItemAmazon(item)
-                
+                user_style = self.processUseramazon(reviews_user)
                 task_description = f'''
-                You are a real human user on amazon, a platform for crowd-sourced business reviews. Here is your profile and review history: {reviews_user}
+                You are a real human user on amazon, a platform for crowd-sourced business reviews. Here is your review style and history: {user_style}
 
                 You need to write a review for this business, here is the information: {item_info}
 
                 Others have reviewed this business before: {review_similar}
 
                 Please analyze the following aspects carefully:
-                1. Based on your user profile and review style, what rating would you give this business? Remember that many users give 5-star ratings for excellent experiences that exceed expectations, and 1-star ratings for very poor experiences that fail to meet basic standards.
+                1. Based on the item information and your review profile, what rating would you give this business? Remember that many users give 5-star ratings for excellent experiences that exceed expectations, and 1-star ratings for very poor experiences that fail to meet basic standards.
                 2. Given the business details and your past experiences, what specific aspects would you comment on? Focus on the positive aspects that make this business stand out or negative aspects that severely impact the experience.
                 3. Consider how other users might engage with your review in terms of:
                 - Useful: How informative and helpful is your review?
@@ -517,7 +632,7 @@ class MySimulationAgent(SimulationAgent):
                 Requirements:
                 - Star rating must be one of: 1.0, 2.0, 3.0, 4.0, 5.0
                 - If the business meets or exceeds expectations in key areas, consider giving a 5-star rating
-                - If the business fails significantly in key areas, consider giving a 1-star rating
+                - Avoid giving 1.0 unless the item is seriously flawed
                 - Review text should be 2-4 sentences, focusing on your personal experience and emotional response
                 - Useful/funny/cool counts should be non-negative integers that reflect likely user engagement
                 - Maintain consistency with your historical review style and rating patterns
@@ -532,15 +647,16 @@ class MySimulationAgent(SimulationAgent):
                 #print(task_description)
             elif user['source'] == 'goodreads':
                 item_info = self.processItemGoodreads(item)
+                user_style = self.processUsergoodreads(reviews_user)
                 task_description = f'''
-                You are a real human user on goodreads, a platform for crowd-sourced book reviews.
+                You are a real human user on goodreads, a platform for crowd-sourced book reviews. Here is your review style and history: {user_style}
 
                 You need to write a review for this business, here is the information: {item_info}
 
                 Others have reviewed this book before: {review_similar}
 
                 Please analyze the following aspects carefully:
-                1. Based on your user profile and review style, what rating would you give this business? Remember that many users give 5-star ratings for excellent experiences that exceed expectations, and 1-star ratings for very poor experiences that fail to meet basic standards.
+                1. Based on the item information and your review profile, what rating would you give this business? Remember that many users give 5-star ratings for excellent experiences that exceed expectations, and 1-star ratings for very poor experiences that fail to meet basic standards.
                 2. Given the book details and your past experiences, what specific aspects would you comment on? Focus on the positive aspects that make this business stand out or negative aspects that severely impact the experience.
                 3. Consider how other users might engage with your review in terms of:
                 - Useful: How informative and helpful is your review?
@@ -549,8 +665,10 @@ class MySimulationAgent(SimulationAgent):
 
                 Requirements:
                 - Star rating must be one of: 1.0, 2.0, 3.0, 4.0, 5.0
-                - If the book meets or exceeds expectations in key areas, consider giving a 5-star rating
-                - If the book fails significantly in key areas, consider giving a 1-star rating
+                - If the book meets or slightly exceeds expectations, give 4.0
+                - If the book significantly exceeds expectations or delivers a profound emotional or intellectual impact, give 5.0
+                - Avoid giving 1.0 unless the book is seriously flawed
+                - If the book has minor shortcomings but is generally enjoyable, give 3.0 or 2.0
                 - Review text should be 2-4 sentences, focusing on your personal experience and emotional response
                 - Useful/funny/cool counts should be non-negative integers that reflect likely user engagement
                 - Maintain consistency with your historical review style and rating patterns
@@ -598,7 +716,7 @@ if __name__ == "__main__":
     root_dir = os.path.dirname(script_dir)  
 
     # 数据目录路径
-    task_set = "goodreads" # "goodreads" or "yelp"
+    task_set = "yelp" # "goodreads" or "yelp"
     data_dir = os.path.join(root_dir, "data", "processed")  
     results_dir = os.path.join(root_dir, "results")
     simulator = Simulator(data_dir=data_dir, device="gpu", cache=True)  
@@ -615,7 +733,7 @@ if __name__ == "__main__":
     # If you don't set the number of tasks, the simulator will run all tasks.
     outputs = simulator.run_simulation(number_of_tasks=100, enable_threading=True, max_workers=10)
     
-    output_file = os.path.join(results_dir, f"evaluation_results_track1_{task_set}_item_user_reflection.json")
+    output_file = os.path.join(results_dir, f"evaluation_results_track1_{task_set}_item_user_noreviewuser.json")
 
     # Evaluate the agent
     evaluation_results = simulator.evaluate()       
@@ -624,4 +742,3 @@ if __name__ == "__main__":
 
     # Get evaluation history
     evaluation_history = simulator.get_evaluation_history()
-
