@@ -721,40 +721,5 @@ class MySimulationAgent(SimulationAgent):
                 "review": ""
             }
 
-if __name__ == "__main__":
-    # Set the data
-    # 获取脚本所在目录的路径
-    script_dir = os.path.dirname(os.path.abspath(__file__))
 
-    # 获取项目根目录路径  
-    root_dir = os.path.dirname(script_dir)  
-
-    # 数据目录路径
-    task_set = "yelp" # "goodreads" or "yelp"
-    data_dir = os.path.join(root_dir, "data", "processed")  
-    results_dir = os.path.join(root_dir, "results")
-    simulator = Simulator(data_dir=data_dir, device="gpu", cache=True)  
-    
-    task_dir = os.path.join(script_dir, "track1", task_set, "tasks")  
-    groundtruth_dir = os.path.join(script_dir, "track1", task_set, "groundtruth")  
-    simulator.set_task_and_groundtruth(task_dir=task_dir, groundtruth_dir=groundtruth_dir)  
-
-    # Set the agent and LLM
-    simulator.set_agent(MySimulationAgent)
-    simulator.set_llm(InfinigenceLLM(api_key="sk-damtshfyvhcd7xmg"))
-
-    # Run the simulation
-    # If you don't set the number of tasks, the simulator will run all tasks.
-    outputs = simulator.run_simulation(number_of_tasks=100, enable_threading=True, max_workers=10)
-    
-    output_file = os.path.join(results_dir, f"evaluation_results_track1_{task_set}_olditem_olduser_newtaskdescription.json")
-    # output_file = os.path.join(results_dir, f"evaluation_results_track1_{task_set}_look.json")
-
-    # Evaluate the agent
-    evaluation_results = simulator.evaluate()       
-    with open(output_file, 'w') as f:
-        json.dump(evaluation_results, f, indent=4)
-
-    # Get evaluation history
-    evaluation_history = simulator.get_evaluation_history()
 
