@@ -406,16 +406,15 @@ class MySimulationAgent(SimulationAgent):
         
         # 构建初始 prompt，加入平均值和方差信息  
         prompt = (  
-            f"Analyze the review style of a Amazon user based on their historical reviews. "  
-            f"The user's average star rating is {mean_rating:.2f}, and the variance in their ratings is {variance_rating:.2f}. "  
+            f"You are a user in Amazon, please analyze the review style of yourself based on their historical reviews. "  
+            f"Your average star rating is {mean_rating:.2f}, and the variance in the ratings is {variance_rating:.2f}. "  
             "Focus on the following aspects:\n\n"  
-            "1. **Star ratings**: Discuss whether the user tends to give higher or lower ratings based on this average. "  
-            "Does their variance suggest consistent ratings, or do they tend toward extreme ratings (e.g., only 1 or 5 stars)?\n"  
+            "1. **Star ratings**: Discuss whether you tend to give higher or lower ratings based on this average. "  
+            "Does your variance suggest consistent ratings, or do they tend toward extreme ratings (e.g., only 1 or 5 stars)?\n"  
             "2. **Review sentiment and emotion**: Identify common sentiments (positive, neutral, negative) "  
-            "and emotional tones (e.g., enthusiastic, critical, disappointed) in the user's reviews. "  
-            "Summarize their review style based on the language used.\n"  
+            "and emotional tones (e.g., enthusiastic, critical, disappointed) in your reviews. "  
             "3. **Correlation between star ratings and review content**: Analyze what types of items or aspects tend to receive higher ratings, "  
-            "and what aspects tend to receive lower ratings. Highlight specific themes or patterns in their reviews that align with their scores.\n\n"  
+            "and what aspects tend to receive lower ratings. Highlight specific themes or patterns in your reviews that align with your scores.\n\n"  
         )  
 
         # 遍历用户的每条评论，将内容添加到 prompt  
@@ -426,9 +425,9 @@ class MySimulationAgent(SimulationAgent):
         
         # 总结部分  
         prompt += (  
-            "Based on the provided data, summarize the user's review style, addressing the above dimensions. "  
-            "Pay special attention to the relationship between their ratings, the content of their reviews, "  
-            "and the emotional tone they exhibit."  
+            "Based on the provided data, summarize your review style, addressing the above dimensions. "  
+            "Pay special attention to the relationship between your ratings, the content of your reviews, "  
+            "and the emotional tone you exhibit."  
         )  
         reasoning_result = self.llm(  
             messages=[{"role": "user", "content": prompt}],  
@@ -581,52 +580,158 @@ class MySimulationAgent(SimulationAgent):
 
             # 不同task用不同的处理方式和prompt
             if user['source'] == 'yelp':
-                item_info = self.processItemYelp(item) 
-                #user_style = self.processUserYelp(reviews_user)
+                # item_info = self.processItemYelp(item) 
                 user_style = self.processUserYelp(user)
+                name = item.get("name", "Unknown")  
+                stars = item.get("stars", "Unknown")  
+                is_open = item.get("is_open", "Unknown")  
+
+                # 确保 attributes 始终是字典，如果是 None 则设为空字典  
+                attributes = item.get("attributes", {}) or {}  
+
+                restaurants_reservations = attributes.get("RestaurantsReservations", "Unknown")
+                restaurants_good_for_groups = attributes.get("RestaurantsGoodForGroups", "Unknown")
+                restaurants_attire = attributes.get("RestaurantsAttire", "casual").replace("'", "")
+                business_accepts_credit_cards = attributes.get("BusinessAcceptsCreditCards", "Unknown")
+                wi_fi = attributes.get("WiFi", "free").replace("'", "")
+                has_tv = attributes.get("HasTV", "Unknown")
+                restaurants_take_out = attributes.get("RestaurantsTakeOut", "Unknown")
+                ambience = attributes.get("Ambience", "{}")
+                good_for_kids = attributes.get("GoodForKids", "Unknown")
+                noise_level = attributes.get("NoiseLevel", "Unknown").replace("u'", "").replace("'", "")
+                happy_hour = attributes.get("HappyHour", "Unknown")
+                restaurants_delivery = attributes.get("RestaurantsDelivery", "Unknown")
+                wheelchair_accessible = attributes.get("WheelchairAccessible", "Unknown")
+                outdoor_seating = attributes.get("OutdoorSeating", "Unknown")
+                restaurants_table_service = attributes.get("RestaurantsTableService", "Unknown")
+                hours = item.get("hours", {})  
+
+                # user_style = self.processUserYelp_reviews_user(reviews_user)
                 # You need to write a review for this business, here is the information: {item_info}
                 task_description = f'''
-                You are a real human user on Yelp, a platform for crowd-sourced business reviews. Here is your Yelp profile and review history style: {user_style}
+                You are a real human user on Yelp, a platform for crowd-sourced business reviews.  
+                Here is your Yelp profile and review history style: {user_style}  
 
-                You need to write a review for this business, here is the information: {item_info}
+                You need to write a review for this business. Here is the information: 
+        
+                Name of this business '{name}'  
 
-                Others have reviewed this business before: {review_similar}
+                Contextual Data Overview:  
+                1. Operational Metrics  
+                - Current Status: {'Open' if is_open == 1 else 'Closed'}  
+                - Overall Rating: {stars} stars   
 
-                Please analyze the following aspects carefully:
-                1. Based on your user profile and review style, what rating would you give this business? Remember that many users give 5-star ratings for excellent experiences that exceed expectations, and 1-star ratings for very poor experiences that fail to meet basic standards.
-                2. Given the business details and your past experiences, what specific aspects would you comment on? Focus on the positive aspects that make this business stand out or negative aspects that severely impact the experience.
-                3. Consider how other users might engage with your review in terms of:
-                - Useful: How informative and helpful is your review?
-                - Funny: Does your review have any humorous or entertaining elements?
-                - Cool: Is your review particularly insightful or praiseworthy?
+                2. Service Capabilities  
+                - Reservations: {'Available' if restaurants_reservations == 'True' else 'Not Available'}  
+                - Group-Friendly: {'Yes' if restaurants_good_for_groups == 'True' else 'No'}  
+                - Table Service: {'Provided' if restaurants_table_service == 'True' else 'Limited'}  
+                - Takeout: {'Offered' if restaurants_take_out == 'True' else 'Not Available'}  
+                - Delivery: {'Available' if restaurants_delivery == 'True' else 'Not Available'}  
 
-                Requirements:
-                - Star rating must be one of: 1.0, 2.0, 3.0, 4.0, 5.0
-                - If the business meets or exceeds expectations in key areas, consider giving a 5-star rating
-                - If the business fails significantly in key areas, consider giving a 1-star rating
-                - Review text should be 2-4 sentences, focusing on your personal experience and emotional response
-                - Useful/funny/cool counts should be non-negative integers that reflect likely user engagement
-                - Maintain consistency with your historical review style and rating patterns
-                - Focus on specific details about the business rather than generic comments
-                - Be generous with ratings when businesses deliver quality service and products
-                - Be critical when businesses fail to meet basic standards
+                3. Dining Environment  
+                - Ambience Type: {ambience}  
+                - Noise Level: {noise_level}  
+                - Kid-Friendly: {'Yes' if good_for_kids == 'True' else 'No'}  
+                - Dress Code: {restaurants_attire}  
+                - Outdoor Seating: {'Available' if outdoor_seating == 'True' else 'Not Available'}  
 
-                Format your response exactly as follows:
-                stars: [your rating]
-                review: [your review]
+                4. Facilities and Amenities  
+                - WiFi: {wi_fi}  
+                - TV: {'Available' if has_tv == 'True' else 'Not Available'}  
+                - Wheelchair Access: {'Yes' if wheelchair_accessible == 'True' else 'No'}    
+
+                5. Dining Experience Enhancers    
+                - Happy Hour: {'Available' if happy_hour == 'True' else 'Not Offered'}  
+                - Payment Methods: {'Credit Cards Accepted' if business_accepts_credit_cards == 'True' else 'Limited Payment Options'}  
+
+                6. Operating Hours  
+                {hours}  
+    
+                Others have reviewed this business before: {review_similar}  
+
+                Please analyze the following aspects carefully:  
+                1. **Star Rating**:  
+                - Be highly critical when assigning star ratings, ensuring they reflect the true quality of the business.  
+                - Only businesses that significantly exceed expectations in all key areas should receive a 5-star rating.  
+                - Minor shortcomings should prevent a perfect score.  
+                - If the business performs adequately but does not stand out, a 3-star rating is appropriate.  
+                - Reserve 4 stars for businesses that meet high standards but fall short of excellence.  
+                - If the business fails to meet expectations in key areas or provides subpar service or products, assign a 2-star rating.  
+                - If the business fails significantly, demonstrates negligence, or provides poor service, assign a 1-star rating.  
+
+                2. **Review Text**:  
+                - The review text can be more generous, focusing on your personal experience and emotional response.  
+                - Highlight specific details about the business, including positive aspects that make it stand out and any negative aspects that detract from the experience.  
+                - Aim to write a review that balances honesty with a fair and thoughtful tone.  
+
+                3. **User Engagement**:  
+                Think about how other users might engage with your review in terms of:  
+                - **Useful**: Is your review informative and helpful to other potential customers?  
+                - **Funny**: Does your review include any humorous or entertaining elements?  
+                - **Cool**: Is your review particularly insightful or praiseworthy?  
+
+                **Requirements**:  
+                - Star rating must be one of: 1.0, 2.0, 3.0, 4.0, 5.0  
+                - Use the following guidelines to determine the rating:  
+                - Businesses delivering exceptional service and products should receive high scores.  
+                - Be critical when businesses fail to meet basic standards, ensuring ratings reflect the severity of shortcomings.  
+                - Review text should be 2-4 sentences, focusing on specific details about the experience. While the star rating reflects a critical evaluation, the review can highlight positive elements or provide constructive feedback.  
+
+                **Format your response exactly as follows**:  
+                stars: [your rating]  
+                review: [your review]  
                 '''
+
             elif user['source'] == 'amazon':
-                item_info = self.processItemAmazon(item)
+                name = item.get("title", "Unknown Product")  
+                features = item.get("features", [])  
+                description = item.get("description", ["No description"])[0] if item.get("description") else "No description"  
+                #rating_number = item.get("rating_number", 0)  
+                average_rating = item.get("average_rating", 0)  
+                main_category = item.get("main_category", "Uncategorized")  
+                
+                # 从嵌套的details中提取信息  
+                details = item.get("details", {})  
+                #size = details.get("Size", "Unknown Size")  
+                #material = details.get("Material", "Unknown Material")  
+                brand = details.get("Brand", "Unknown Brand")  
+                
+                # 购买决策参考字段  
+                price = item.get("price") or "Price Not Available"  
+                #warranty = details.get("Warranty Description", "No warranty information")  
+
                 user_style = self.processUseramazon(reviews_user)
                 task_description = f'''
-                You are a real human user on amazon, a platform for crowd-sourced business reviews. Here is your review style and history: {user_style}
+                You are an Amazon customer leaving a review based on your personal experience. Your review should reflect the style and tone of a genuine Amazon user, consistent with your review history. 
+                Here is your review style: {user_style}
 
-                You need to write a review for this business, here is the information: {item_info}
+                Here's the reference product information:
 
-                Others have reviewed this business before: {review_similar}
+                ### Product Details:  
+                1. **Basic Information**:  
+                - Name: {name}  
+                - Category: {main_category}  
+                - Brand: {brand}  
+
+                2. **Performance Metrics**:  
+                - Average Rating: {average_rating} / 5  
+
+                3. **Key Features**:  
+                {features}  
+
+                4. **Detailed Description**:  
+                {description}  
+
+                5. **Purchase Considerations**:  
+                - Price: {price}  
+
+                ### Additional Context:  
+                - Other users have reviewed this product before: {review_similar}  
+
+                ---
 
                 Please analyze the following aspects carefully:
-                1. Based on the item information and your review profile, what rating would you give this business? Remember that many users give 5-star ratings for excellent experiences that exceed expectations, and 1-star ratings for very poor experiences that fail to meet basic standards.
+                1. Based on the item information and your review style, what rating would you give this business? Remember that many users give 5-star ratings for excellent experiences that exceed expectations.
                 2. Given the business details and your past experiences, what specific aspects would you comment on? Focus on the positive aspects that make this business stand out or negative aspects that severely impact the experience.
                 3. Consider how other users might engage with your review in terms of:
                 - Useful: How informative and helpful is your review?
@@ -638,29 +743,50 @@ class MySimulationAgent(SimulationAgent):
                 - If the business meets or exceeds expectations in key areas, consider giving a 5-star rating
                 - Avoid giving 1.0 unless the item is seriously flawed
                 - Review text should be 2-4 sentences, focusing on your personal experience and emotional response
-                - Useful/funny/cool counts should be non-negative integers that reflect likely user engagement
                 - Maintain consistency with your historical review style and rating patterns
                 - Focus on specific details about the business rather than generic comments
                 - Be generous with ratings when businesses deliver quality service and products
-                - Be critical when businesses fail to meet basic standards
-
+    
                 Format your response exactly as follows:
                 stars: [your rating]
                 review: [your review]
                 '''
-                #print(task_description)
+
             elif user['source'] == 'goodreads':
-                item_info = self.processItemGoodreads(item)
+                # item_info = self.processItemGoodreads(item)
                 user_style = self.processUsergoodreads(reviews_user)
+                title = item.get('title', 'Unknown Title')  
+                description = item.get('description', 'No description available')  
+                #format = item.get('format', 'Unknown Format')  
+                #num_pages = item.get('num_pages', 'Unknown')  
+                publisher = item.get('publisher', 'Unknown Publisher')  
+                publication_year = item.get('publication_year', 'Unknown Year')
+                
+                average_rating = item.get('average_rating', 'Unknown')  
+                #ratings_count = item.get('ratings_count', 'Unknown')  
+                #text_reviews_count = item.get('text_reviews_count', 'Unkown')
                 task_description = f'''
                 You are a real human user on goodreads, a platform for crowd-sourced book reviews. Here is your review style and history: {user_style}
 
-                You need to write a review for this business, here is the information: {item_info}
+                You need to write a review for this book, here is the basic information that you can refer to: 
+
+                1. Book Fundamentals  
+                - Title: {title}  
+                - Publisher: {publisher}  
+                - Publication Year: {publication_year}  
+
+                2. Performance Metrics  
+                - Average Rating: {average_rating} / 5  
+
+                3. Book Description:  
+                {description}  
+
+                ---
 
                 Others have reviewed this book before: {review_similar}
 
                 Please analyze the following aspects carefully:
-                1. Based on the item information and your review profile, what rating would you give this business? Remember that many users give 5-star ratings for excellent experiences that exceed expectations, and 1-star ratings for very poor experiences that fail to meet basic standards.
+                1. Based on the item information and your review profile, what rating would you give this book? Remember that many users give 5-star ratings for excellent books that exceed expectations. On Goodreads, people tend to choose highly-rated books to read, which often leads to higher ratings being given on goodreads.
                 2. Given the book details and your past experiences, what specific aspects would you comment on? Focus on the positive aspects that make this business stand out or negative aspects that severely impact the experience.
                 3. Consider how other users might engage with your review in terms of:
                 - Useful: How informative and helpful is your review?
@@ -672,9 +798,8 @@ class MySimulationAgent(SimulationAgent):
                 - If the book meets or slightly exceeds expectations, give 4.0
                 - If the book significantly exceeds expectations or delivers a profound emotional or intellectual impact, give 5.0
                 - Avoid giving 1.0 unless the book is seriously flawed
-                - If the book has minor shortcomings but is generally enjoyable, give 3.0 or 2.0
+                - If the book has minor shortcomings but is generally enjoyable, give 3.0
                 - Review text should be 2-4 sentences, focusing on your personal experience and emotional response
-                - Useful/funny/cool counts should be non-negative integers that reflect likely user engagement
                 - Maintain consistency with your historical review style and rating patterns
                 - Focus on specific details about the book rather than generic comments
                 - Be generous with ratings when book deliver quality service and products
@@ -684,6 +809,7 @@ class MySimulationAgent(SimulationAgent):
                 stars: [your rating]
                 review: [your review]
                 '''
+
 
 
             result = self.reasoning(task_description)
@@ -720,7 +846,7 @@ if __name__ == "__main__":
     root_dir = os.path.dirname(script_dir)  
 
     # 数据目录路径
-    task_set = "yelp" # "goodreads" or "yelp"
+    task_set = "goodreads" # "goodreads" or "yelp"
     data_dir = os.path.join(root_dir, "data", "processed")  
     results_dir = os.path.join(root_dir, "results")
     simulator = Simulator(data_dir=data_dir, device="gpu", cache=True)  
@@ -737,7 +863,7 @@ if __name__ == "__main__":
     # If you don't set the number of tasks, the simulator will run all tasks.
     outputs = simulator.run_simulation(number_of_tasks=100, enable_threading=True, max_workers=10)
     
-    output_file = os.path.join(results_dir, f"evaluation_results_track1_{task_set}_item_user2.json")
+    output_file = os.path.join(results_dir, f"evaluation_results_track1_{task_set}_0122.json")
 
     # Evaluate the agent
     evaluation_results = simulator.evaluate()       
