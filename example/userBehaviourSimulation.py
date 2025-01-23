@@ -729,27 +729,33 @@ class MySimulationAgent(SimulationAgent):
                 - Other users have reviewed this product before: {review_similar}  
 
                 ---
-
                 Please analyze the following aspects carefully:
-                1. Based on the item information and your review style, what rating would you give this business? Remember that many users give 5-star ratings for excellent experiences that exceed expectations.
-                2. Given the business details and your past experiences, what specific aspects would you comment on? Focus on the positive aspects that make this business stand out or negative aspects that severely impact the experience.
+                1. Based on the item information and your review profile, what rating would you give this product? Remember that many users give 5-star ratings for excellent books that exceed expectations.
+                2. Given the product details and your past experiences, what specific aspects would you comment on? Focus on the positive aspects that make this book stand out or negative aspects that severely impact the experience.
                 3. Consider how other users might engage with your review in terms of:
                 - Useful: How informative and helpful is your review?
                 - Funny: Does your review have any humorous or entertaining elements?
                 - Cool: Is your review particularly insightful or praiseworthy?
 
                 Requirements:
-                - Star rating must be one of: 1.0, 2.0, 3.0, 4.0, 5.0
-                - If the business meets or exceeds expectations in key areas, consider giving a 5-star rating
-                - Avoid giving 1.0 unless the item is seriously flawed
-                - Review text should be 2-4 sentences, focusing on your personal experience and emotional response
+                1. **Star Rating**:
+                - Be highly critical when assigning star ratings, ensuring they reflect the true quality of the product.
+                - Only products that significantly exceed expectations in all key areas should receive a 5-star rating.
+                - Minor shortcomings should prevent a perfect score.
+                - If the product performs adequately but does not stand out, a 3-star rating is appropriate.
+                - Reserve 4 stars for products that meet high standards but fall short of excellence.
+                - If the product fails to meet expectations in key areas or provides subpar service or products, assign a 2-star rating.
+                - If the product fails significantly, demonstrates negligence, or provides poor service, assign a 1-star rating.
+                - Review text should be 2-4 sentences, focusing on your personal experience and emotional response.
+
                 - Maintain consistency with your historical review style and rating patterns
-                - Focus on specific details about the business rather than generic comments
-                - Be generous with ratings when businesses deliver quality service and products
-    
+                - Focus on specific details about the product rather than generic comments
+                - Be generous with ratings when product deliver quality service and products
+                - Be critical when product fail to meet basic standards
+
                 Format your response exactly as follows:
                 stars: [your rating]
-                review: [your review]
+                review: [your review] 
                 '''
 
             elif user['source'] == 'goodreads':
@@ -786,20 +792,24 @@ class MySimulationAgent(SimulationAgent):
                 Others have reviewed this book before: {review_similar}
 
                 Please analyze the following aspects carefully:
-                1. Based on the item information and your review profile, what rating would you give this book? Remember that many users give 5-star ratings for excellent books that exceed expectations. On Goodreads, people tend to choose highly-rated books to read, which often leads to higher ratings being given on goodreads.
-                2. Given the book details and your past experiences, what specific aspects would you comment on? Focus on the positive aspects that make this business stand out or negative aspects that severely impact the experience.
+                1. Based on the item information and your review profile, what rating would you give this book? Remember that many users give 5-star ratings for excellent books that exceed expectations.
+                2. Given the book details and your past experiences, what specific aspects would you comment on? Focus on the positive aspects that make this book stand out or negative aspects that severely impact the experience.
                 3. Consider how other users might engage with your review in terms of:
                 - Useful: How informative and helpful is your review?
                 - Funny: Does your review have any humorous or entertaining elements?
                 - Cool: Is your review particularly insightful or praiseworthy?
 
                 Requirements:
-                - Star rating must be one of: 1.0, 2.0, 3.0, 4.0, 5.0
-                - If the book meets or slightly exceeds expectations, give 4.0
-                - If the book significantly exceeds expectations or delivers a profound emotional or intellectual impact, give 5.0
-                - Avoid giving 1.0 and 2.0 unless the book is seriously flawed
-                - If the book has minor shortcomings but is generally enjoyable, give 3.0
-                - Review text should be 2-4 sentences, focusing on your personal experience and emotional response
+                1. **Star Rating**:
+                - Be highly critical when assigning star ratings, ensuring they reflect the true quality of the book.
+                - Only books that significantly exceed expectations in all key areas should receive a 5-star rating.
+                - Minor shortcomings should prevent a perfect score.
+                - If the book performs adequately but does not stand out, a 3-star rating is appropriate.
+                - Reserve 4 stars for books that meet high standards but fall short of excellence.
+                - If the book fails to meet expectations in key areas or provides subpar service or products, assign a 2-star rating.
+                - If the book fails significantly, demonstrates negligence, or provides poor service, assign a 1-star rating.
+                - Review text should be 2-4 sentences, focusing on your personal experience and emotional response.
+
                 - Maintain consistency with your historical review style and rating patterns
                 - Focus on specific details about the book rather than generic comments
                 - Be generous with ratings when book deliver quality service and products
@@ -846,7 +856,7 @@ if __name__ == "__main__":
     root_dir = os.path.dirname(script_dir)  
 
     # 数据目录路径
-    task_set = "goodreads" # "goodreads" or "yelp"
+    task_set = "amazon" # "goodreads" or "yelp"
     data_dir = os.path.join(root_dir, "data", "processed")  
     results_dir = os.path.join(root_dir, "results")
     simulator = Simulator(data_dir=data_dir, device="gpu", cache=True)  
@@ -863,7 +873,7 @@ if __name__ == "__main__":
     # If you don't set the number of tasks, the simulator will run all tasks.
     outputs = simulator.run_simulation(number_of_tasks=100, enable_threading=True, max_workers=10)
     
-    output_file = os.path.join(results_dir, f"evaluation_results_track1_{task_set}_0122_user_rewrite_attempt2.json")
+    output_file = os.path.join(results_dir, f"evaluation_results_track1_{task_set}_0122_sharp_rating.json")
 
     # Evaluate the agent
     evaluation_results = simulator.evaluate()       
