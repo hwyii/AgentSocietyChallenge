@@ -797,7 +797,7 @@ class MySimulationAgent(SimulationAgent):
                 - Star rating must be one of: 1.0, 2.0, 3.0, 4.0, 5.0
                 - If the book meets or slightly exceeds expectations, give 4.0
                 - If the book significantly exceeds expectations or delivers a profound emotional or intellectual impact, give 5.0
-                - Avoid giving 1.0 unless the book is seriously flawed
+                - Avoid giving 1.0 and 2.0 unless the book is seriously flawed
                 - If the book has minor shortcomings but is generally enjoyable, give 3.0
                 - Review text should be 2-4 sentences, focusing on your personal experience and emotional response
                 - Maintain consistency with your historical review style and rating patterns
@@ -863,7 +863,7 @@ if __name__ == "__main__":
     # If you don't set the number of tasks, the simulator will run all tasks.
     outputs = simulator.run_simulation(number_of_tasks=100, enable_threading=True, max_workers=10)
     
-    output_file = os.path.join(results_dir, f"evaluation_results_track1_{task_set}_0122.json")
+    output_file = os.path.join(results_dir, f"evaluation_results_track1_{task_set}_0122_user_rewrite_attempt2.json")
 
     # Evaluate the agent
     evaluation_results = simulator.evaluate()       
