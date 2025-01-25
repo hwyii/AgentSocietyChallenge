@@ -1,3 +1,4 @@
+# 去掉停车信息（循环），去掉所有user style
 import sys  
 import os  
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  
@@ -580,7 +581,7 @@ class MySimulationAgent(SimulationAgent):
 
             # 不同task用不同的处理方式和prompt
             if user['source'] == 'yelp':
-                user_style = self.processUserYelp(user)
+                #user_style = self.processUserYelp(user)
                 name = item.get("name", "Unknown")
                 stars = item.get("stars", "Unknown")
                 is_open = item.get("is_open", "Unknown")
@@ -619,7 +620,7 @@ class MySimulationAgent(SimulationAgent):
                 # Build a more concise prompt
                 task_description = f'''
                 You are a real human user on Yelp, a platform for crowd-sourced business reviews.
-                Here is your Yelp profile and review history style: {user_style}
+                
 
                 You need to write a review for this business. Here is the information:
 
@@ -728,10 +729,10 @@ class MySimulationAgent(SimulationAgent):
                 price = item.get("price") or "Price Not Available"  
                 #warranty = details.get("Warranty Description", "No warranty information")  
 
-                user_style = self.processUseramazon(reviews_user)
+                #user_style = self.processUseramazon(reviews_user)
                 task_description = f'''
                 You are an Amazon customer leaving a review based on your personal experience. Your review should reflect the style and tone of a genuine Amazon user, consistent with your review history. 
-                Here is your review style: {user_style}
+                
 
                 Here's the reference product information:
 
@@ -788,7 +789,7 @@ class MySimulationAgent(SimulationAgent):
 
             elif user['source'] == 'goodreads':
                 # item_info = self.processItemGoodreads(item)
-                user_style = self.processUsergoodreads(reviews_user)
+                #user_style = self.processUsergoodreads(reviews_user)
                 title = item.get('title', 'Unknown Title')  
                 description = item.get('description', 'No description available')  
                 #format = item.get('format', 'Unknown Format')  
@@ -800,7 +801,7 @@ class MySimulationAgent(SimulationAgent):
                 #ratings_count = item.get('ratings_count', 'Unknown')  
                 #text_reviews_count = item.get('text_reviews_count', 'Unkown')
                 task_description = f'''
-                You are a real human user on goodreads, a platform for crowd-sourced book reviews. Here is your review style and history: {user_style}
+                You are a real human user on goodreads, a platform for crowd-sourced book reviews. 
 
                 You need to write a review for this book, here is the basic information that you can refer to: 
 
