@@ -80,7 +80,7 @@ class InfinigenceLLM(LLMBase):
             response = self.client.chat.completions.create(
                 model=model or self.model,
                 messages=messages,
-                temperature=0,
+                temperature=temperature,
                 max_tokens=max_tokens,
                 stop=stop_strs,
                 n=n,
@@ -130,7 +130,7 @@ class OpenAILLM(LLMBase):
         response = self.client.chat.completions.create(
             model=model or self.model,
             messages=messages,
-            temperature=0,
+            temperature=temperature,
             max_tokens=max_tokens,
             stop=stop_strs,
             n=n

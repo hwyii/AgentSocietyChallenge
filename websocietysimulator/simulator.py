@@ -185,6 +185,12 @@ class Simulator:
             self.simulation_outputs = [None] * len(task_to_run)
 
             def process_task(task_index_tuple):
+                from concurrent.futures import ThreadPoolExecutor, TimeoutError
+                
+                def run_agent_task(agent, task):
+                    output = agent.workflow()
+                    return output
+                
                 index, task = task_index_tuple
                 # 检查是否已经被要求取消
                 if cancel_event.is_set():
@@ -198,21 +204,28 @@ class Simulator:
                 agent.insert_task(task)
                 
                 try:
-                    # 定期检查是否需要取消
-                    if cancel_event.is_set():
-                        return index, None
-                        
-                    output = agent.workflow()
-                    result = {
-                        "task": task.to_dict(),
-                        "output": output
-                    }
+                    # 使用内部的ThreadPoolExecutor来执行单个任务，设置超时时间为5分钟
+                    with ThreadPoolExecutor(max_workers=1) as single_task_executor:
+                        future = single_task_executor.submit(run_agent_task, agent, task)
+                        try:
+                            output = future.result(timeout=300)  # 5 minutes timeout
+                            result = {
+                                "task": task.to_dict(),
+                                "output": output
+                            }
+                        except TimeoutError:
+                            logger.warning(f"Task {index} timed out")
+                            # 强制关闭执行器
+                            single_task_executor._threads.clear()
+                            single_task_executor.shutdown(wait=False)
+                            return index, None
                 except NotImplementedError:
                     result = {
                         "task": task.to_dict(),
                         "error": "Forward method not implemented by participant."
                     }
                 except Exception as e:
+                    logger.error(f"Task {index} failed with error: {str(e)}")
                     return index, None
                 
                 with log_lock:
